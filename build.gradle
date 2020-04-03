@@ -1,0 +1,72 @@
+plugins {
+    id 'org.springframework.boot' version '2.2.2.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.8.RELEASE'
+    id 'java'
+    id 'scala'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '13'
+
+repositories {
+    mavenCentral()
+}
+
+configurations {
+    tools
+}
+
+sourceSets {
+    tools {
+        java {
+            srcDirs = ['src/tools/java']
+        }
+    }
+}
+
+dependencies {
+    tools 'com.google.guava:guava:28.2-jre'
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+    implementation 'org.scala-lang:scala-library:2.13.1'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+jar {
+    enabled = true
+}
+bootJar {
+    enabled = true
+    archiveClassifier = 'boot'
+}
+task toolsJar(type: Jar) {
+    enabled = true
+    from sourceSets.tools.output
+    archiveClassifier = 'tools'
+}
+
+apply plugin: 'maven-publish'
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifact jar
+            artifact bootJar
+            artifact toolsJar
+        }
+    }
+    repositories {
+        maven {
+            def releasesRepoUrl = "$buildDir/repos/releases"
+            def snapshotsRepoUrl = "$buildDir/repos/snapshots"
+            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+        }
+    }
+}
